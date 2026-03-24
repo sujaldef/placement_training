@@ -28,8 +28,8 @@ JWT_SECRET=change-this-to-a-strong-random-secret
 
 Notes:
 
-- If `MONGODB_URI` is empty or MongoDB is unreachable, app falls back to local JSON at `data/auth-progress.json`.
-- For production on Vercel, use MongoDB for persistent writes.
+- In local development, if `MONGODB_URI` is empty or MongoDB is unreachable, app falls back to local JSON at `data/auth-progress.json`.
+- In production (Vercel), MongoDB is required and the API returns `503` until `MONGODB_URI` is configured and reachable.
 
 ## Local Development
 

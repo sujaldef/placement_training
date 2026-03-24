@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { COOKIE_NAME, verifyAuthToken } from '@/lib/auth';
-import { getProgressByUser, setProgressForUser } from '@/lib/storage';
+import {
+  getProgressByUser,
+  isStorageUnavailableError,
+  setProgressForUser,
+} from '@/lib/storage';
 
 const VALID_STATUSES = new Set(['todo', 'review', 'done']);
 
@@ -28,7 +32,17 @@ export async function GET(request) {
   try {
     const progress = await getProgressByUser(userId);
     return NextResponse.json(progress);
-  } catch (_error) {
+  } catch (error) {
+    if (isStorageUnavailableError(error)) {
+      return NextResponse.json(
+        {
+          error:
+            'Database unavailable. Configure MONGODB_URI and allow Vercel access in MongoDB Atlas.',
+        },
+        { status: 503 },
+      );
+    }
+
     return NextResponse.json(
       { error: 'Failed to load progress.' },
       { status: 500 },
@@ -69,7 +83,17 @@ export async function PUT(request) {
       status,
       storageMode: result.storageMode,
     });
-  } catch (_error) {
+  } catch (error) {
+    if (isStorageUnavailableError(error)) {
+      return NextResponse.json(
+        {
+          error:
+            'Database unavailable. Configure MONGODB_URI and allow Vercel access in MongoDB Atlas.',
+        },
+        { status: 503 },
+      );
+    }
+
     return NextResponse.json(
       { error: 'Failed to save progress.' },
       { status: 500 },
