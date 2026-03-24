@@ -1,0 +1,151 @@
+Placement Training Planner - Project Context
+
+1) What this project is
+- A Next.js 14 App Router web app for placement preparation planning.
+- Users can sign up/login and track day-level progress statuses:
+  - todo
+  - review
+  - done
+- Planner content is served from local static data.
+- User auth/progress can use MongoDB or local JSON fallback (development only).
+
+2) Tech stack
+- Framework: Next.js (App Router)
+- UI: React
+- Auth: JWT + HTTP-only cookie session
+- Password hashing: bcryptjs
+- DB (preferred): MongoDB via Mongoose
+- Fallback storage: file-based JSON in data/auth-progress.json
+
+3) Main user flow
+- User lands on / and sees login/signup form.
+- Signup/login APIs validate credentials and set auth_token cookie.
+- User is redirected to /dashboard.
+- Dashboard fetches planner + user progress.
+- User updates status per day, which persists through /api/progress.
+
+4) Route structure
+- app/page.js
+  - Login/signup UI and submit handlers.
+- app/dashboard/page.js
+  - Server-side gate for auth cookie, renders DashboardClient.
+- components/DashboardClient.js
+  - Main dashboard UI, filters, theme, card rendering, and status updates.
+
+API routes:
+- POST /api/auth/signup
+- POST /api/auth/login
+- POST /api/auth/logout
+- GET  /api/auth/me
+- GET  /api/planner
+- GET  /api/progress
+- PUT  /api/progress
+
+5) Auth model
+- JWT secret source: process.env.JWT_SECRET.
+- Cookie name: auth_token.
+- Cookie flags:
+  - HttpOnly
+  - SameSite=Lax
+  - Secure in production
+  - Max-Age 7 days
+- middleware.js protects:
+  - /dashboard/*
+  - /api/progress/*
+
+6) Storage model (important)
+Storage logic is in lib/storage.js.
+
+Behavior by environment:
+- Development:
+  - If MONGODB_URI exists and DB is reachable, uses MongoDB.
+  - If missing/unreachable, falls back to local JSON file.
+- Production (Vercel):
+  - MongoDB is required.
+  - If missing/unreachable, APIs return 503 with actionable message.
+
+Custom storage error type:
+- StorageUnavailableError
+- Used by auth/progress APIs to return 503 instead of silent failure.
+
+7) Data model
+MongoDB models in lib/models.js:
+- User
+  - name (unique)
+  - passwordHash
+- Progress
+  - userId
+  - dayKey
+  - status (todo/review/done)
+  - unique index on (userId, dayKey)
+
+8) Planner data and day keys
+- Planner source: planner-data.js via lib/planner.js and /api/planner.
+- Day status key format in dashboard:
+  - weekId + "-" + normalized day date text
+- This key is used for reading/writing user progress.
+
+9) Dashboard UI features currently implemented
+In components/DashboardClient.js + app/globals.css:
+- Dark/light theme toggle with localStorage persistence.
+- Filter bar:
+  - Search by date/task text
+  - Status filter
+  - Week/date scope filter
+- Week progress text and bar.
+- Day cards with visual variants:
+  - todo, review, done, overdue
+- Quick Mark Done action.
+- Best done streak and visible task counters.
+- Responsive behavior for tablet/mobile.
+
+10) Progress bar note
+- Progress bar uses a width-driven fill element (not native progress tag)
+  to ensure visual updates immediately when status changes.
+
+11) Branding/icon
+- Site icon is app/icon.svg.
+- Source logo provided in data/logofile.svg.
+- Next.js serves app/icon.svg automatically as the site icon.
+
+12) Environment variables
+Expected:
+- MONGODB_URI
+- JWT_SECRET
+- PORT is optional for local process binding.
+
+Do not commit real secrets.
+
+13) Local dev commands
+- npm install
+- npm run dev
+- npm run build
+- npm start
+
+If npm start fails with EADDRINUSE on 3000:
+- Another process is already using port 3000.
+- Stop the process or run on a different port.
+
+14) Deployment notes (Vercel)
+- Set MONGODB_URI and JWT_SECRET in project env vars.
+- Ensure MongoDB Atlas network access allows Vercel.
+- In production, login/signup/progress will return 503 if DB is unavailable.
+
+15) Key files to edit by concern
+- Auth token/cookie behavior: lib/auth.js
+- Route protection: middleware.js
+- Storage mode logic: lib/storage.js
+- Mongo connection: lib/db.js
+- Models: lib/models.js
+- Login/signup page: app/page.js
+- Dashboard server gate: app/dashboard/page.js
+- Dashboard UX/features: components/DashboardClient.js
+- Global theming/styles: app/globals.css
+- Planner content source: planner-data.js
+
+16) Current architecture summary
+- App Router frontend + API routes in one Next.js app.
+- Cookie-based session auth with JWT payload (sub/name).
+- Progress persisted per-user per-day with storage abstraction.
+- Development can run offline with JSON fallback.
+- Production requires MongoDB for reliable persistence.

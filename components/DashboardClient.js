@@ -568,10 +568,9 @@ export default function DashboardClient({ userName }) {
               aria-valuemax={100}
               aria-valuenow={week.stats.percent}
             >
-              <progress
+              <span
                 className="progress-fill"
-                value={week.stats.percent}
-                max={100}
+                style={{ width: `${week.stats.percent}%` }}
               />
             </div>
 

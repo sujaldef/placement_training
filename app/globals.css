@@ -329,35 +329,16 @@ select:focus {
 }
 
 .progress-fill {
-  width: 100%;
+  display: block;
+  width: 0%;
   height: 100%;
-  border: 0;
   border-radius: inherit;
-  overflow: hidden;
-  background: transparent;
-}
-
-.progress-fill::-webkit-progress-bar {
-  background: transparent;
-}
-
-.progress-fill::-webkit-progress-value {
   background: linear-gradient(
     90deg,
     var(--accent) 0%,
     var(--accent-strong) 100%
   );
-  border-radius: 999px;
   transition: width 0.28s ease;
-}
-
-.progress-fill::-moz-progress-bar {
-  background: linear-gradient(
-    90deg,
-    var(--accent) 0%,
-    var(--accent-strong) 100%
-  );
-  border-radius: 999px;
 }
 
 .milestone-strip {
