@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { NextResponse } from 'next/server';
-import { findUserByName } from '@/lib/storage';
+import { findUserByName, isStorageUnavailableError } from '@/lib/storage';
 import { getAuthCookieHeader, signAuthToken } from '@/lib/auth';
 
 function parseBody(body) {
@@ -52,7 +52,17 @@ export async function POST(request) {
         },
       },
     );
-  } catch (_error) {
+  } catch (error) {
+    if (isStorageUnavailableError(error)) {
+      return NextResponse.json(
+        {
+          error:
+            'Database unavailable. Configure MONGODB_URI and allow Vercel access in MongoDB Atlas.',
+        },
+        { status: 503 },
+      );
+    }
+
     return NextResponse.json({ error: 'Failed to login.' }, { status: 500 });
   }
 }

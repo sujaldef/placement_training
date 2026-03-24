@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { NextResponse } from 'next/server';
-import { createUser } from '@/lib/storage';
+import { createUser, isStorageUnavailableError } from '@/lib/storage';
 import { getAuthCookieHeader, signAuthToken } from '@/lib/auth';
 
 function parseBody(body) {
@@ -52,6 +52,16 @@ export async function POST(request) {
       return NextResponse.json(
         { error: 'User already exists.' },
         { status: 409 },
+      );
+    }
+
+    if (isStorageUnavailableError(error)) {
+      return NextResponse.json(
+        {
+          error:
+            'Database unavailable. Configure MONGODB_URI and allow Vercel access in MongoDB Atlas.',
+        },
+        { status: 503 },
       );
     }
 
