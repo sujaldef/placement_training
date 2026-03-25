@@ -18,6 +18,13 @@ const ICONS = {
   other: '+',
 };
 
+const ACTION_LABELS = {
+  videos: { icon: '▶', label: 'Watch' },
+  dsaSheet: { icon: '🔗', label: 'Solve' },
+  indiabix: { icon: '🧠', label: 'Practice' },
+  extras: { icon: '↗', label: 'Open' },
+};
+
 function dayKeyFromDateText(dateText) {
   return dateText.replace(/[, ]+/g, '-').toLowerCase();
 }
@@ -105,24 +112,67 @@ function splitTasks(day) {
     }
 
     if (cat === 'DSA' && /\bvideos?\b/i.test(text)) {
-      result.videos.push(text);
+      result.videos.push(task);
       continue;
     }
 
     if (cat === 'DSA') {
-      result.dsaSheet.push(text);
+      result.dsaSheet.push(task);
       continue;
     }
 
     if (cat === 'APT' || /\bindiabix\b/i.test(text)) {
-      result.indiabix.push(text);
+      result.indiabix.push(task);
       continue;
     }
 
-    result.extras.push({ cat, text });
+    result.extras.push(task);
   }
 
   return result;
+}
+
+function taskActionLabel(task, bucket) {
+  const fallback = ACTION_LABELS[bucket] || ACTION_LABELS.extras;
+  const label = String(task?.linkLabel || fallback.label).trim();
+  return `${fallback.icon} ${label}`;
+}
+
+function TaskList({ items, dayKey, bucket }) {
+  return (
+    <ul className="task-list">
+      {items.map((task) => {
+        const text = String(task?.text || '').trim();
+        const link = String(task?.link || '').trim();
+        const cat = String(task?.cat || '').trim();
+
+        return (
+          <li
+            key={`${dayKey}-${bucket}-${text}-${link || cat}`}
+            className="task-row"
+          >
+            <span className="task-text">
+              {text}
+              {link ? <span className="task-link-hint">↗</span> : null}
+            </span>
+
+            {link ? (
+              <a
+                href={link}
+                className="task-link"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Open resource"
+                aria-label={`Open resource for: ${text}`}
+              >
+                {taskActionLabel(task, bucket)}
+              </a>
+            ) : null}
+          </li>
+        );
+      })}
+    </ul>
+  );
 }
 
 function DayCard({
@@ -153,11 +203,7 @@ function DayCard({
             Videos
           </p>
           {taskInfo.videos.length ? (
-            <ul className="task-list">
-              {taskInfo.videos.map((item) => (
-                <li key={`${dayKey}-video-${item}`}>{item}</li>
-              ))}
-            </ul>
+            <TaskList items={taskInfo.videos} dayKey={dayKey} bucket="videos" />
           ) : (
             <p className="task-empty">No video target listed.</p>
           )}
@@ -169,11 +215,11 @@ function DayCard({
             DSA Sheet
           </p>
           {taskInfo.dsaSheet.length ? (
-            <ul className="task-list">
-              {taskInfo.dsaSheet.map((item) => (
-                <li key={`${dayKey}-dsa-${item}`}>{item}</li>
-              ))}
-            </ul>
+            <TaskList
+              items={taskInfo.dsaSheet}
+              dayKey={dayKey}
+              bucket="dsaSheet"
+            />
           ) : (
             <p className="task-empty">No DSA sheet item listed.</p>
           )}
@@ -185,11 +231,11 @@ function DayCard({
             IndiaBix
           </p>
           {taskInfo.indiabix.length ? (
-            <ul className="task-list">
-              {taskInfo.indiabix.map((item) => (
-                <li key={`${dayKey}-apt-${item}`}>{item}</li>
-              ))}
-            </ul>
+            <TaskList
+              items={taskInfo.indiabix}
+              dayKey={dayKey}
+              bucket="indiabix"
+            />
           ) : (
             <p className="task-empty">No IndiaBix item listed.</p>
           )}
@@ -201,14 +247,14 @@ function DayCard({
               <span className="task-icon">{ICONS.other}</span>
               Other
             </p>
-            <ul className="task-list">
-              {taskInfo.extras.map((item) => (
-                <li key={`${dayKey}-extra-${item.text}`}>
-                  {item.cat ? `${item.cat}: ` : ''}
-                  {item.text}
-                </li>
-              ))}
-            </ul>
+            <TaskList
+              items={taskInfo.extras.map((item) => ({
+                ...item,
+                text: `${item.cat ? `${item.cat}: ` : ''}${item.text || ''}`,
+              }))}
+              dayKey={dayKey}
+              bucket="extras"
+            />
           </section>
         ) : null}
       </div>
