@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { LayoutDashboard } from 'lucide-react';
 
 const STATUS_OPTIONS = [
   { value: 'todo', label: 'Todo' },
@@ -24,6 +25,22 @@ const ACTION_LABELS = {
   indiabix: { icon: '🧠', label: 'Practice' },
   extras: { icon: '↗', label: 'Open' },
 };
+
+function GitHubIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...props}>
+      <path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.2.8-.6v-2.1c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1.1-.8.1-.8.1-.8 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.9 1.3 3.6 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-6a4.8 4.8 0 0 1 1.2-3.3c-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.1 11.1 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1a4.8 4.8 0 0 1 1.2 3.3c0 4.7-2.8 5.7-5.5 6 .4.4.8 1.1.8 2.2v3.2c0 .4.2.7.8.6A12 12 0 0 0 12 .5z" />
+    </svg>
+  );
+}
+
+function LinkedInIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...props}>
+      <path d="M4.98 3.5A2.5 2.5 0 1 1 5 8.5a2.5 2.5 0 0 1-.02-5zM3 9h4v12H3zM10 9h3.8v1.7h.1c.5-.9 1.8-2 3.8-2 4 0 4.7 2.6 4.7 6V21h-4v-5.2c0-1.3 0-2.9-1.8-2.9s-2.1 1.4-2.1 2.8V21h-4z" />
+    </svg>
+  );
+}
 
 function dayKeyFromDateText(dateText) {
   return dateText.replace(/[, ]+/g, '-').toLowerCase();
@@ -285,11 +302,10 @@ function DayCard({
   );
 }
 
-export default function DashboardClient({ userName }) {
+export default function DashboardClient() {
   const router = useRouter();
   const [planner, setPlanner] = useState(null);
   const [statuses, setStatuses] = useState({});
-  const [storageMode, setStorageMode] = useState('json');
   const [theme, setTheme] = useState('dark');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -332,7 +348,6 @@ export default function DashboardClient({ userName }) {
 
         setPlanner(plannerData);
         setStatuses(progressData.statuses || {});
-        setStorageMode(progressData.storageMode || 'json');
       } catch (loadError) {
         if (mounted) {
           setError(loadError.message || 'Failed to load dashboard.');
@@ -464,8 +479,6 @@ export default function DashboardClient({ userName }) {
       if (!response.ok) {
         throw new Error(payload?.error || 'Failed to save progress');
       }
-
-      setStorageMode(payload.storageMode || 'json');
     } catch (saveError) {
       setStatuses((current) => ({ ...current, [dayKey]: previous || 'todo' }));
       setError(saveError.message || 'Unable to save progress');
@@ -497,25 +510,66 @@ export default function DashboardClient({ userName }) {
   return (
     <main className="dashboard-shell">
       <header className="dashboard-header">
-        <div>
-          <p className="eyebrow">Placement Planner Dashboard</p>
-          <h1>{userName}</h1>
-          <p className="muted">Storage mode: {storageMode}</p>
+        <div className="header-brand">
+          <div className="brand-logo" aria-hidden="true">
+            <LayoutDashboard size={17} strokeWidth={2.2} />
+          </div>
+          <div className="brand-text">
+            <h1 className="dashboard-title">Placement Planner Dashboard</h1>
+            <p className="dashboard-tagline">
+              Track your DSA progress efficiently
+            </p>
+          </div>
         </div>
 
-        <div className="header-actions">
-          <button
-            onClick={toggleTheme}
-            className="theme-toggle"
-            type="button"
-            aria-label="Toggle color theme"
+        <div className="header-right">
+          <div
+            className="social-strip"
+            role="group"
+            aria-label="Developer links"
           >
-            <span className="theme-dot" />
-            {theme === 'dark' ? 'Dark' : 'Light'}
-          </button>
-          <button onClick={logout} className="ghost-btn" type="button">
-            Logout
-          </button>
+            <p className="dev-label">Developed by Sujal koshta</p>
+            <div className="social-links">
+              <a
+                href="https://github.com/sujaldef"
+                className="social-link"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Open GitHub"
+                aria-label="Open Sujal GitHub profile"
+              >
+                <GitHubIcon width="16" height="16" />
+              </a>
+              <a
+                href="https://www.linkedin.com/in/sujalkoshta"
+                className="social-link"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Open LinkedIn"
+                aria-label="Open Sujal LinkedIn profile"
+              >
+                <LinkedInIcon width="16" height="16" />
+              </a>
+            </div>
+          </div>
+
+          <span className="header-divider" aria-hidden="true" />
+
+          <div className="header-actions">
+            <button
+              onClick={toggleTheme}
+              className="theme-toggle"
+              type="button"
+              aria-label="Toggle color theme"
+              title="Toggle theme"
+            >
+              <span className="theme-dot" />
+              {theme === 'dark' ? 'Dark' : 'Light'}
+            </button>
+            <button onClick={logout} className="ghost-btn" type="button">
+              Logout
+            </button>
+          </div>
         </div>
       </header>
 
