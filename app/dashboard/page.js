@@ -15,5 +15,5 @@ export default function DashboardPage() {
     redirect('/');
   }
 
-  return <DashboardClient userName={String(payload.name || 'User')} />;
+  return <DashboardClient />;
 }
