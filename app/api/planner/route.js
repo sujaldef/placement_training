@@ -85,9 +85,6 @@ export async function GET(request) {
       message,
       stack: error instanceof Error ? error.stack : undefined,
     });
-    return NextResponse.json(
-      { error: message },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
