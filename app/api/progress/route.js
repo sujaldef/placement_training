@@ -3,6 +3,7 @@ import { COOKIE_NAME, verifyAuthToken } from '@/lib/auth';
 import {
   getProgressByUser,
   isStorageUnavailableError,
+  setPlannerSettingsForUser,
   setProgressForUser,
 } from '@/lib/storage';
 
@@ -96,6 +97,67 @@ export async function PUT(request) {
 
     return NextResponse.json(
       { error: 'Failed to save progress.' },
+      { status: 500 },
+    );
+  }
+}
+
+export async function PATCH(request) {
+  const userId = getUserId(request);
+
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+  }
+
+  try {
+    const body = await request.json();
+    const startDate = String(body?.startDate || '').trim();
+    const startVideoPosition = Number.parseInt(
+      String(body?.startVideoPosition || ''),
+      10,
+    );
+    const startDsaTopicId = String(body?.startDsaTopicId || '').trim();
+    const startAptitudeId = String(body?.startAptitudeId || '').trim();
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
+      return NextResponse.json(
+        { error: 'startDate must be in YYYY-MM-DD format.' },
+        { status: 400 },
+      );
+    }
+
+    if (!Number.isFinite(startVideoPosition) || startVideoPosition < 1) {
+      return NextResponse.json(
+        { error: 'startVideoPosition must be a positive number.' },
+        { status: 400 },
+      );
+    }
+
+    const result = await setPlannerSettingsForUser(userId, {
+      startDate,
+      startVideoPosition,
+      startDsaTopicId,
+      startAptitudeId,
+    });
+
+    return NextResponse.json({
+      ok: true,
+      settings: result.settings,
+      storageMode: result.storageMode,
+    });
+  } catch (error) {
+    if (isStorageUnavailableError(error)) {
+      return NextResponse.json(
+        {
+          error:
+            'Database unavailable. Configure MONGODB_URI and allow Vercel access in MongoDB Atlas.',
+        },
+        { status: 503 },
+      );
+    }
+
+    return NextResponse.json(
+      { error: 'Failed to save planner settings.' },
       { status: 500 },
     );
   }
